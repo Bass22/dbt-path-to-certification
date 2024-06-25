@@ -1,26 +1,15 @@
-WITH paid_orders as (select Orders.ID as order_id,
-    Orders.USER_ID	as customer_id,
-    Orders.ORDER_DATE AS order_placed_at,
-        Orders.STATUS AS order_status,
-    p.total_amount_paid,
-    p.payment_finalized_date,
-    C.FIRST_NAME    as customer_first_name,
-        C.LAST_NAME as customer_last_name
-FROM {{ source('jaffle_shop', 'jaffle_shop_orders') }} as Orders
-left join (select ORDERID as order_id, max(CREATED) as payment_finalized_date, sum(AMOUNT) / 100.0 as total_amount_paid
-        from {{ source('jaffle_shop', 'stripe_payments') }}
-        where STATUS <> 'fail'
-        group by 1) p ON orders.ID = p.order_id
-left join {{ source('jaffle_shop', 'jaffle_shop_customers') }} C on orders.USER_ID = C.ID ),
+WITH paid_orders as (
+    select * from {{ ref('paid_orders') }}
+ ),
 
 customer_orders 
-as (select C.ID as customer_id
-    , min(ORDER_DATE) as first_order_date
-    , max(ORDER_DATE) as most_recent_order_date
-    , count(ORDERS.ID) AS number_of_orders
-from {{ source('jaffle_shop', 'jaffle_shop_customers') }} C 
-left join {{ source('jaffle_shop', 'jaffle_shop_orders') }} as Orders
-on orders.USER_ID = C.ID 
+as (select C.customer_id
+    , min(order_placed_at) as first_order_date
+    , max(order_placed_at) as most_recent_order_date
+    , count (Orders.order_id) AS number_of_orders
+from {{ ref('stg_customers') }} C 
+left join {{ ref('stg_orders') }} as Orders
+on orders.customer_id = C.customer_id 
 group by 1)
 
 select
