@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    database: deductive-star-418112
+    schema: dbt_ba2s_learning
+    tables:
+      - name: jaffle_shop_orders
+      - name: jaffle_shop_customers
+      - name: stripe_payments
